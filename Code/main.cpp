@@ -1,10 +1,11 @@
 /************************************************************************************************/
-/*** Topic: Hodgkin-Huxley model with Runge-Kutta 4th Order Method for one neuron    Ali-Seif ***/
+/*** Topic: Hodgkin-Huxley model with Runge-Kutta 4th Order Method in Erdos-Renyi network     ***/ 
+/***	    for N neurons and Possibility of connection P                            Ali-Seif ***/
 /*** Version Release 17.12 rev 11256                                                          ***/
 /*** Date: 12/3/2020                                                                          ***/
 /*** Code implemented in CodeBlocks C++ compiler (v. 17.12),                                  ***/
 /*** MSI: PX60 6QD/ DDR4                                                                      ***/
-/*** Run under a Intel® Core™ i7-6700HQ CPU @ 2.60GHz × 64 based processor with 16 GB RAM     ***/
+/*** Run under a IntelÂ® Coreâ„¢ i7-6700HQ CPU @ 2.60GHz Ã— 64 based processor with 16 GB RAM     ***/
 /************************************************************************************************/
 #include <iostream>                                             //for cout
 #include <math.h>                                               //for pow()
