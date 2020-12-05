@@ -1,16 +1,35 @@
 /************************************************************************************************/
-/*** Topic: Hodgkin-Huxley model with Runge-Kutta 4th Order Method in Erdos-Renyi network     ***/ 
+/*** Topic: Hodgkin-Huxley model with Runge-Kutta 4th Order Method in Erdos-Renyi network     ***/
 /***	    for N neurons and Possibility of connection P                            Ali-Seif ***/
 /*** Version Release 17.12 rev 11256                                                          ***/
-/*** Date: 12/3/2020                                                                          ***/
+/*** Date: 12/5/2020                                                                          ***/
 /*** Code implemented in CodeBlocks C++ compiler (v. 17.12),                                  ***/
 /*** MSI: PX60 6QD/ DDR4                                                                      ***/
 /*** Run under a Intel® Core™ i7-6700HQ CPU @ 2.60GHz × 64 based processor with 16 GB RAM     ***/
 /************************************************************************************************/
+/*
+The following an article have been used to write this program.
+[1] Dynamic range in small-world networks of Hodgkin–Huxley neurons with chemical synapses
+C.A.S. Batista a , R.L. Viana a, S.R. Lopes a, A.M. Batista
+https://doi.org/10.1016/j.physa.2014.05.069
+0378-4371/© 2014 Published by Elsevier B.V.
+*/
 #include <iostream>                                             //for cout
 #include <math.h>                                               //for pow()
 #include <fstream>                                              //for ofstream
+#include <stdlib.h>                                             //srand, rand
+#include <time.h>                                               //time
 using namespace std;                                            //for Standard program
+//##############################################################
+//####                                                      ####
+//####                       Variables                      ####
+//####                                                      ####
+//##############################################################
+#define size1 7                                                 //Number of neurons
+#define probability 0.4                                         //Possibility of connection
+#define endtime 10                                              //finaltime for run
+#define current 6.5                                             //External Current
+#define lengthsteps 0.01                                        //length steps
 //##############################################################
 //####                                                      ####
 //####                 Create class Neuron                  ####
@@ -18,43 +37,52 @@ using namespace std;                                            //for Standard p
 //##############################################################
 class Neuron
 {
-	private:
-		double Gna = 120.0;
-		double Gk = 36.0;
-		double Gl = 0.3;
-		double El = -49.42;
-		double Ena = 55.17;
-		double Ek = -72.14;
-        double Cm = 1.0;
-        double Iapp= 6.5;
-        double  k1, k2, k3, k4;
-	public:
-        void onedt(void);
-		double alpha_n(double);
-		double beta_n(double);
-	  	double alpha_m(double);
-	  	double beta_m(double);
-	  	double alpha_h(double);
-	  	double beta_h(double);
-	  	double n_inf(double);
-	  	double m_inf(double);
-	  	double h_inf(double);
-	  	double INa1(double,double,double);
-	  	double IK1(double,double);
-	  	double Il1(double);
-	  	double dvdt(double,double,double,double,double);
-	  	double dndt(double,double,double);
-        double dhdt(double,double,double);
-        double dmdt(double,double,double);
-	  	double rk4thOrder_v(double,double,double,double,double,double);
-	  	double rk4thOrder_n(double,double,double,double);
-	  	double rk4thOrder_h(double,double,double,double);
-        double rk4thOrder_m(double,double,double,double);
-        double t_final=100;
-        double dt = 0.01;
-	  	double t0;
-  		double v,n,m,h;
-};
+	private:                                                    //Fixed and variable values that we do not have access to outside the class
+		double Gna = 120.0;                                     //sodiom_constant
+		double Gk = 36.0;                                       //Potasiom_constant
+		double Gl = 0.3;                                        //Leak_constant
+        double Ena = 55.17;                                     //Votage_sodiom
+		double Ek = -72.14;                                     //Votage_Potasiom
+		double El = -49.42;                                     //Votage_Leak
+        double Cm = 1.0;                                        //Capacitor_capacity
+        double Iapp= current;                                   //External Current
+        double  k1, k2, k3, k4;                                 //define 4 point for calculate Runge-Kutta
+	public:                                                     //Fixed and variable values that we have access to from outside the class
+	    ofstream temp;                                          //create file for save data
+	    void start(void);                                       //call start and Initial values
+        void onedt(void);                                       //Run for one step dt
+        void runprint(void);                                    //run for all time and print in file
+        void runshow(void);                                     //run for all time and show in exe
+        int num=size1;                                          //Number of neurons
+		double alpha_n(double);                                 //calculate alpha n
+		double beta_n(double);                                  //calculate beta n
+	  	double alpha_m(double);                                 //calculate alpha m
+	  	double beta_m(double);                                  //calculate beta m
+	  	double alpha_h(double);                                 //calculate alpha h
+	  	double beta_h(double);                                  //calculate beta h
+	  	double n_inf(double);                                   //calculate infinitude n
+	  	double m_inf(double);                                   //calculate infinitude m
+	  	double h_inf(double);                                   //calculate infinitude h
+	  	double INa1(double,double,double);                      //sodiom Current
+	  	double IK1(double,double);                              //potasiom Current
+	  	double Il1(double);                                     //leak Current
+	  	double dvdt(double,double,double,double,double);        //Differential equation for voltage
+	  	double dndt(double,double,double);                      //Differential equation for n
+        double dmdt(double,double,double);                      //Differential equation for m
+        double dhdt(double,double,double);                      //Differential equation for h
+	  	double rk4thOrder_v(double,double,double,double,double,double);//Runge-Kutta for voltage
+	  	double rk4thOrder_n(double,double,double,double);       //Runge-Kutta for n
+        double rk4thOrder_m(double,double,double,double);       //Runge-Kutta for m
+	  	double rk4thOrder_h(double,double,double,double);       //Runge-Kutta for h
+        double t_final=endtime;                                 //final time
+        double dt = lengthsteps;                                //length steps
+        double V[size1+1][2+1];                                 //define matrix for pre and post voltage of any neuron
+        double N[size1+1][2+1];                                 //define matrix for pre and post n of any neuron
+        double H[size1+1][2+1];                                 //define matrix for pre and post h of any neuron
+        double M[size1+1][2+1];                                 //define matrix for pre and post m of any neuron
+	  	double t0;                                              //Pedometer
+  		double v,n,m,h;};                                       //variable values for each step
+
 //_________________________________Calculate alpha and betas_________________________________//
 
 double Neuron::alpha_n(double v){return   0.01*(v+50)/(1-exp(-(v+50)/10));}
@@ -115,12 +143,155 @@ double Neuron::rk4thOrder_m(double t0, double v, double dt,double m) {
     return   m;}
 //_________________________________One step run calculations_________________________________//
 
+void Neuron::start(){
+
+    for (int i=1 ; i<=num;i++){
+       for (int j=1 ; j<=3;j++){
+            V[i][j]=0;
+            N[i][j]=0;
+            H[i][j]=0;
+            M[i][j]=0;}}
+    v=-20.0;
+    for(int i=1;i<=num;i++){
+        V[i][1]=v;
+        N[i][1]=n_inf(v);
+        H[i][1]=h_inf(v);
+        M[i][1]=m_inf(v);}
+}
+
 void Neuron::onedt(){
     v=rk4thOrder_v(t0, v, dt,n,h,m);
     n=rk4thOrder_n(t0,v, dt ,n);
     h=rk4thOrder_h(t0, v, dt ,h);
     m=rk4thOrder_m(t0, v, dt ,m);
     }
+
+//__________________________run for all steps and print in file _____________________________//
+void Neuron::runprint(){
+    //ofstream temp;
+    ofstream temp("temp.txt");
+    for (t0=dt ; t0<=t_final ;t0=t0 + dt){
+        for ( int i=1 ; i<=num ; i++){
+            v=V[i][1];
+            n=N[i][1];
+            h=H[i][1];
+            m=M[i][1];
+            onedt();
+
+            V[i][2]=v;
+            N[i][2]=n;
+            H[i][2]=h;
+            M[i][2]=m;
+
+            V[i][1]=V[i][2];
+            N[i][1]=N[i][2];
+            H[i][1]=H[i][2];
+            M[i][1]=M[i][2];
+        }
+
+        temp<<t0;
+        for(int k=1;k<=num;k++){
+            temp<<'\t'<<V[k][2];
+        }
+        temp<<endl;
+    }
+    temp.close();
+}
+//___________________________ run for all steps and show in exe _____________________________//
+void Neuron::runshow(){
+    for (t0=dt ; t0<=t_final ;t0=t0 + dt){
+        for ( int i=1 ; i<=num ; i++){
+            v=V[i][1];
+            n=N[i][1];
+            h=H[i][1];
+            m=M[i][1];
+
+            onedt();
+
+            V[i][2]=v;
+            N[i][2]=n;
+            H[i][2]=h;
+            M[i][2]=m;
+
+            V[i][1]=V[i][2];
+            N[i][1]=N[i][2];
+            H[i][1]=H[i][2];
+            M[i][1]=M[i][2];
+        }
+        cout<<t0;
+        for(int k=1;k<=num;k++){
+            cout<<'\t'<<V[k][2];
+        }
+        cout<<endl;
+    }
+}
+
+//##############################################################
+//####                                                      ####
+//####            Create class Neighborhood                 ####
+//####                                                      ####
+//##############################################################
+
+class Neighborhood
+{
+	private:                                                    //Fixed and variable values that we do not have access to outside the class
+        float p=probability;                                    //Possibility of connection
+        int iSecret;                                            //Random probability between zero and one
+	public:                                                     //Fixed and variable values that we have access to from outside the class
+	    ofstream temp1;                                         //create file for save data
+        void oneA(void);                                        //create Adjacency matrix
+        void show(void);                                        //show Adjacency matrix
+        void print(void);                                       //print Adjacency matrix
+        int n=size1;                                            //number of node
+        float A[size1+1][size1+1];                              //Because matrix start from 0
+        int numb;};                                             //Counting links
+//________________________________ create Adjacency matrix __________________________________//
+
+void Neighborhood::oneA(){
+    srand (time(NULL));                                         //initialize random seed
+    for (int i=1 ; i<=n;i++){
+       for (int j=1 ; j<=n;j++){A[i][j]=0;}}
+    numb=0;
+    for (int i=1 ; i<=n;i++){
+        for (int j=i ; j<=n;j++){
+            iSecret = rand() % 10 + 1;
+            int pp=p*10;
+            if (iSecret<=pp && i!=j ){
+                A[i][j]=1;
+                numb=numb+1;
+            }
+            else{
+               A[i][j]=0;
+            }
+            A[j][i]=A[i][j];}}}
+//________________________________ show Adjacency matrix ____________________________________//
+
+void Neighborhood::show(){
+    for (int i=1 ; i<=n;i++){cout<<'\t'<<i;}
+    cout<<endl<<endl;
+    for (int i=1 ; i<=n;i++){
+        cout<<i<<'\t';
+        for (int j=1 ; j<=n;j++){cout<<A[i][j]<<'\t';}
+        cout<<endl<<endl;}}
+
+//_________________________________ print Adjacency matrix __________________________________//
+
+ void Neighborhood::print(){
+    ofstream temp1("datas.txt");
+    temp1<<"{\"nodes\":[{\"name\":\"0\",\"group\":1}";
+    for (int i=1 ; i<n;i++){temp1<<",{\"name\":\""<<i<<"\",\"group\":"<<i<<"}";}
+    temp1<<"],\"links\":[";
+    int number=0;
+    for (int i=0 ; i<n;i++){
+        for (int j=i ; j<n;j++){
+            if (A[i][j]==1){
+                number=number+1;
+                temp1<<"{\"source\":"<<i<<",\"target\":"<<j<<",\"value\":1}";
+                if(number<numb){temp1<<",";}}}}
+    temp1<<"]}";
+    temp1.close();
+    cout << "\nFinish" << endl;}
+
 //_______________________________________________________________________________________\\
 //_____________                                                             _____________\\
 //_____________                                      @                      _____________\\
@@ -133,54 +304,18 @@ void Neuron::onedt(){
 //_______________________________________________________________________________________
 
 int main() {
+    Neighborhood neig;                                          //call class Adjacency matrix
+    neig.oneA();                                                //create Adjacency matrix
+    neig.show();                                                //show Adjacency matrix
+    //neig.print();                                             //print Adjacency matrix
+//______________________________________________________________
 
-    Neuron neuron;
-    //ofstream temp("temp.txt", ios::out | ios::trunc);
+    Neuron neuron;                                              //call class Hodgkin-Huxley
+    neuron.start();                                             //start and create variable
+    //neuron.runshow();                                         //run Hodgkin-Huxley and show
+    //neuron.runprint();                                        //run Hodgkin-Huxley and print
 
-    int num=3;
-
-    double V[num+1][2+1]={0.0};
-    double N[num+1][2+1]={0.0};
-    double H[num+1][2+1]={0.0};
-    double M[num+1][2+1]={0.0};
-
-
-    neuron.v=-20.0;
-    for(int i=1;i<=num;i++){
-        V[i][1]=neuron.v;
-        N[i][1]=neuron.n_inf(neuron.v);
-        H[i][1]=neuron.h_inf(neuron.v);
-        M[i][1]=neuron.m_inf(neuron.v);
-    }
-
-    for ( neuron.t0=neuron.dt ; neuron.t0<=neuron.t_final ; neuron.t0=neuron.t0 + neuron.dt){
-         for ( int i=1 ; i<=num ; i++){
-
-            neuron.v=V[i][1];
-            neuron.n=N[i][1];
-            neuron.h=H[i][1];
-            neuron.m=M[i][1];
-
-            neuron.onedt();
-
-            V[i][2]=neuron.v;
-            N[i][2]=neuron.n;
-            H[i][2]=neuron.h;
-            M[i][2]=neuron.m;
-
-            V[i][1]=V[i][2];
-            N[i][1]=N[i][2];
-            H[i][1]=H[i][2];
-            M[i][1]=M[i][2];
-
-
-         }
-        //temp<<neuron.t0 << '\t' <<neuron.v<<endl;
-
-        cout<<neuron.t0 << '\t' <<V[1][2] <<'\t' <<V[2][2] <<'\t' <<V[3][2] <<endl;
-    }
-    //temp.close();
     cout << "\nFinish" << endl;
-
     return 0;
 }
+
