@@ -4,6 +4,20 @@ Hodgkin-Huxley model with Runge-Kutta 4th Order Method in Erdos-Renyi network fo
 
 
 
+
+
+## Independent neurons
+Hodgkin-Huxley model with Runge-Kutta 4th Order Method in Erdos-Renyi network for N neurons and Possibility of connection P Independent neurons
+
+
+
+<p align="center">
+ <img src="https://github.com/aliseif321/Erdos-Renyi____Hodgkin-Huxley____Runge-Kutta/blob/main/Independent%20neurons/Pictures/Adjacency%20matrix.png?raw=true" >
+ </p>
+
+
+
+
 The following an article have been used to write this program.
 
 [1] Dynamic range in small-world networks of Hodgkin–Huxley neurons with chemical synapses 
