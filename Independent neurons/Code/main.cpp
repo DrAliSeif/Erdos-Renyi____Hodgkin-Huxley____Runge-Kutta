@@ -284,7 +284,7 @@ void Neighborhood::show(){
     int number=0;
     for (int i=0 ; i<n;i++){
         for (int j=i ; j<n;j++){
-            if (A[i][j]==1){
+            if (A[i+1][j+1]==1){
                 number=number+1;
                 temp1<<"{\"source\":"<<i<<",\"target\":"<<j<<",\"value\":1}";
                 if(number<numb){temp1<<",";}}}}
@@ -307,15 +307,14 @@ int main() {
     Neighborhood neig;                                          //call class Adjacency matrix
     neig.oneA();                                                //create Adjacency matrix
     neig.show();                                                //show Adjacency matrix
-    //neig.print();                                             //print Adjacency matrix
+    neig.print();                                               //print Adjacency matrix
 //______________________________________________________________
 
     Neuron neuron;                                              //call class Hodgkin-Huxley
     neuron.start();                                             //start and create variable
-    //neuron.runshow();                                         //run Hodgkin-Huxley and show
-    //neuron.runprint();                                        //run Hodgkin-Huxley and print
+    neuron.runshow();                                           //run Hodgkin-Huxley and show
+    neuron.runprint();                                          //run Hodgkin-Huxley and print
 
     cout << "\nFinish" << endl;
     return 0;
 }
-
